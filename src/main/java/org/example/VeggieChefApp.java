@@ -17,6 +17,7 @@ public class VeggieChefApp extends Application {
 
     private DatabaseManager dbManager = new DatabaseManager();
     private BorderPane mainLayout;
+    private ComboBox<String> categoryComboBox;
 
     @Override
     public void start(Stage primaryStage) {
@@ -32,6 +33,19 @@ public class VeggieChefApp extends Application {
         // Bottom section
         HBox bottomSection = createBottomSection();
         mainLayout.setBottom(bottomSection);
+
+        // Initialize category filter
+        categoryComboBox = new ComboBox<>();
+        categoryComboBox.getItems().add("ALL");
+        categoryComboBox.getItems().addAll(dbManager.getAllCategories());
+        categoryComboBox.setOnAction(e -> {
+            String selectedCategory = categoryComboBox.getValue();
+            if (selectedCategory.equals("ALL")) {
+                showAllRecipesView();
+            } else {
+                showRecipesByCategory(selectedCategory);
+            }
+        });
 
         // Show initial view
         showMainView();
@@ -177,27 +191,25 @@ public class VeggieChefApp extends Application {
         scrollPane.setFitToHeight(true);
         mainLayout.setCenter(scrollPane);
     }
+    private HBox createChefsSlider() {
+        HBox chefsBox = new HBox(10);
+        chefsBox.setAlignment(Pos.CENTER_LEFT);
+        chefsBox.setPadding(new Insets(10));
 
-    private HBox createCategoriesSlider() {
-        HBox categoriesBox = new HBox(10);
-        categoriesBox.setAlignment(Pos.CENTER_LEFT);
-        categoriesBox.setPadding(new Insets(10));
-
-        List<String> categories = dbManager.getAllCategories();
-        for (String category : categories) {
-            VBox categoryBox = new VBox(5);
-            categoryBox.setAlignment(Pos.CENTER);
-            Label categoryLabel = new Label(category);
-            categoryLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-            ImageView categoryImage = new ImageView(loadImage("category" + categories.indexOf(category) + ".png"));
-            categoryImage.setFitHeight(80);
-            categoryImage.setFitWidth(80);
-            categoryBox.getChildren().addAll(categoryLabel, categoryImage);
-            categoryBox.setOnMouseClicked(e -> showRecipesByCategory(category));
-            categoriesBox.getChildren().add(categoryBox);
+        List<Chef> chefs = dbManager.getAllChefs();
+        for (Chef chef : chefs) {
+            VBox chefBox = new VBox(5);
+            chefBox.setAlignment(Pos.CENTER);
+            ImageView chefImage = new ImageView(loadImage("chef" + chef.getId() + ".png"));
+            chefImage.setFitHeight(80);
+            chefImage.setFitWidth(80);
+            Label chefName = new Label(chef.getName());
+            chefBox.getChildren().addAll(chefImage, chefName);
+            chefBox.setOnMouseClicked(e -> showRecipesByChef(chef));
+            chefsBox.getChildren().add(chefBox);
         }
 
-        ScrollPane scrollPane = new ScrollPane(categoriesBox);
+        ScrollPane scrollPane = new ScrollPane(chefsBox);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setFitToWidth(true);
@@ -219,26 +231,26 @@ public class VeggieChefApp extends Application {
 
         return slider;
     }
+    private HBox createCategoriesSlider() {
+        HBox categoriesBox = new HBox(10);
+        categoriesBox.setAlignment(Pos.CENTER_LEFT);
+        categoriesBox.setPadding(new Insets(10));
 
-    private HBox createChefsSlider() {
-        HBox chefsBox = new HBox(10);
-        chefsBox.setAlignment(Pos.CENTER_LEFT);
-        chefsBox.setPadding(new Insets(10));
-
-        List<Chef> chefs = dbManager.getAllChefs();
-        for (Chef chef : chefs) {
-            VBox chefBox = new VBox(5);
-            chefBox.setAlignment(Pos.CENTER);
-            ImageView chefImage = new ImageView(loadImage("chef" + chef.getId() + ".png"));
-            chefImage.setFitHeight(80);
-            chefImage.setFitWidth(80);
-            Label chefName = new Label(chef.getName());
-            chefBox.getChildren().addAll(chefImage, chefName);
-            chefBox.setOnMouseClicked(e -> showRecipesByChef(chef));
-            chefsBox.getChildren().add(chefBox);
+        List<String> categories = dbManager.getAllCategories();
+        for (String category : categories) {
+            VBox categoryBox = new VBox(5);
+            categoryBox.setAlignment(Pos.CENTER);
+            Label categoryLabel = new Label(category);
+            categoryLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+            ImageView categoryImage = new ImageView(loadImage("category" + categories.indexOf(category) + ".png"));
+            categoryImage.setFitHeight(80);
+            categoryImage.setFitWidth(80);
+            categoryBox.getChildren().addAll(categoryLabel, categoryImage);
+            categoryBox.setOnMouseClicked(e -> showRecipesByCategory(category));
+            categoriesBox.getChildren().add(categoryBox);
         }
 
-        ScrollPane scrollPane = new ScrollPane(chefsBox);
+        ScrollPane scrollPane = new ScrollPane(categoriesBox);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setFitToWidth(true);
@@ -303,12 +315,15 @@ public class VeggieChefApp extends Application {
         }
 
         recipesByCategoryView.getChildren().addAll(recipesByCategoryLabel, recipesBox);
-        ScrollPane scrollPane = new ScrollPane(recipesByCategoryView);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
-        mainLayout.setCenter(scrollPane);
+        ScrollPane recipesScrollPane = new ScrollPane(recipesByCategoryView);
+        recipesScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        recipesScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        recipesScrollPane.setFitToWidth(true);
+        recipesScrollPane.setFitToHeight(true);
+
+        VBox combinedView = new VBox(createCategoryFilterBox(), recipesScrollPane); // Combine category filter and recipes
+        combinedView.setSpacing(10);
+        mainLayout.setCenter(combinedView);
     }
 
     private void showAllRecipesView() {
@@ -320,24 +335,7 @@ public class VeggieChefApp extends Application {
         allRecipesLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
         // Categories filter
-        HBox categoriesFilterBox = new HBox(10);
-        categoriesFilterBox.setAlignment(Pos.CENTER_LEFT);
-        categoriesFilterBox.setPadding(new Insets(10));
-
-        Label filterLabel = new Label("Filter by Category: ");
-        categoriesFilterBox.getChildren().add(filterLabel);
-
-        ComboBox<String> categoryComboBox = new ComboBox<>();
-        categoryComboBox.getItems().add("ALL");
-        categoryComboBox.getItems().addAll(dbManager.getAllCategories());
-        categoryComboBox.setOnAction(e -> {
-            if (categoryComboBox.getValue().equals("ALL")) {
-                showAllRecipesView();
-            } else {
-                showRecipesByCategory(categoryComboBox.getValue());
-            }
-        });
-        categoriesFilterBox.getChildren().add(categoryComboBox);
+        HBox categoriesFilterBox = createCategoryFilterBox();
 
         VBox recipesBox = new VBox(10);
         List<Recipe> recipes = dbManager.getPopularRecipes();
@@ -378,7 +376,22 @@ public class VeggieChefApp extends Application {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
-        mainLayout.setCenter(scrollPane);
+
+        VBox combinedView = new VBox(createCategoryFilterBox(), scrollPane); // Combine category filter and all recipes
+        combinedView.setSpacing(10);
+        mainLayout.setCenter(combinedView);
+    }
+
+    private HBox createCategoryFilterBox() {
+        HBox categoriesFilterBox = new HBox(10);
+        categoriesFilterBox.setAlignment(Pos.CENTER_LEFT);
+        categoriesFilterBox.setPadding(new Insets(10));
+
+        Label filterLabel = new Label("Filter by Category: ");
+        categoriesFilterBox.getChildren().add(filterLabel);
+
+        categoriesFilterBox.getChildren().add(categoryComboBox);
+        return categoriesFilterBox;
     }
 
     private void applySearchFilters(String searchString) {
@@ -448,7 +461,10 @@ public class VeggieChefApp extends Application {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
-        mainLayout.setCenter(scrollPane);
+
+        VBox combinedView = new VBox(createCategoryFilterBox(), scrollPane); // Combine category filter and search results
+        combinedView.setSpacing(10);
+        mainLayout.setCenter(combinedView);
     }
 
     private void toggleFavorite(Recipe recipe, Button favoriteButton) {
@@ -502,12 +518,15 @@ public class VeggieChefApp extends Application {
         }
 
         recipesByChefView.getChildren().addAll(recipesByChefLabel, recipesBox);
-        ScrollPane scrollPane = new ScrollPane(recipesByChefView);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
-        mainLayout.setCenter(scrollPane);
+        ScrollPane recipesScrollPane = new ScrollPane(recipesByChefView);
+        recipesScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        recipesScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        recipesScrollPane.setFitToWidth(true);
+        recipesScrollPane.setFitToHeight(true);
+
+        VBox combinedView = new VBox(createCategoryFilterBox(), recipesScrollPane); // Combine category filter and recipes by chef
+        combinedView.setSpacing(10);
+        mainLayout.setCenter(combinedView);
     }
 
     private void showFavoritesView() {
@@ -556,7 +575,10 @@ public class VeggieChefApp extends Application {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
-        mainLayout.setCenter(scrollPane);
+
+        VBox combinedView = new VBox(createCategoryFilterBox(), scrollPane); // Combine category filter and favorites
+        combinedView.setSpacing(10);
+        mainLayout.setCenter(combinedView);
     }
 
     private void showChefsView() {
@@ -654,3 +676,4 @@ public class VeggieChefApp extends Application {
         launch(args);
     }
 }
+
