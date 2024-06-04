@@ -1,6 +1,6 @@
 package org.example;
 
-public class Chef {
+ class Chef {
     private int id;
     private String name;
 
