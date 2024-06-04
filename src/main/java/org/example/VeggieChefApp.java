@@ -611,39 +611,18 @@ public class VeggieChefApp extends Application {
             chefsBox.getChildren().add(chefBox);
         }
 
-        ScrollPane scrollPane = new ScrollPane(chefsBox);
+        chefsView.getChildren().addAll(chefsLabel, chefsBox);
+
+        ScrollPane scrollPane = new ScrollPane(chefsView);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true); // Prevent vertical scrolling
-        scrollPane.setPrefViewportWidth(400);
-        scrollPane.setMinViewportHeight(120); // Set minimum height to prevent vertical scrolling
+        scrollPane.setFitToHeight(true);
 
-        Button leftButton = new Button("<");
-        leftButton.setStyle("-fx-background-color: #FF6F00; -fx-text-fill: white;");
-        leftButton.setOnAction(e -> {
-            scrollPane.setHvalue(scrollPane.getHvalue() - 0.1);
-        });
-
-        Button rightButton = new Button(">");
-        rightButton.setStyle("-fx-background-color: #FF6F00; -fx-text-fill: white;");
-        rightButton.setOnAction(e -> {
-            scrollPane.setHvalue(scrollPane.getHvalue() + 0.1);
-        });
-
-        HBox slider = new HBox(leftButton, scrollPane, rightButton);
-        slider.setAlignment(Pos.CENTER);
-        slider.setMaxWidth(470); // Set the max width to avoid overflow
-        slider.setPrefHeight(140); // Adjust height as needed
-
-        chefsView.getChildren().addAll(chefsLabel, slider);
-        ScrollPane viewScrollPane = new ScrollPane(chefsView);
-        viewScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        viewScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        viewScrollPane.setFitToWidth(true);
-        viewScrollPane.setFitToHeight(true);
-        mainLayout.setCenter(viewScrollPane);
+        mainLayout.setCenter(scrollPane);
     }
+
+
 
     private void showQRCodeView() {
         Label qrCodeLabel = new Label("QR Code View");
