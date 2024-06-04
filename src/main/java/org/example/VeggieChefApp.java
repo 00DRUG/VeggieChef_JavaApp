@@ -4,10 +4,7 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -39,7 +36,7 @@ public class VeggieChefApp extends Application {
         // Show initial view
         showMainView();
 
-        Scene scene = new Scene(mainLayout, 450, 800);
+        Scene scene = new Scene(mainLayout, 470, 800);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -132,18 +129,12 @@ public class VeggieChefApp extends Application {
     private void showMainView() {
         VBox mainView = new VBox(10);
         mainView.setPadding(new Insets(10));
+        mainView.setMaxWidth(450);
 
         Label categoriesLabel = new Label("Categories");
         categoriesLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-        HBox categoriesBox = new HBox(10);
-        categoriesBox.setAlignment(Pos.CENTER_LEFT);
-        // Add dummy categories
-        for (int i = 1; i <= 4; i++) {
-            ImageView categoryImage = new ImageView(loadImage("category" + i + ".png"));
-            categoryImage.setFitHeight(80);
-            categoryImage.setFitWidth(80);
-            categoriesBox.getChildren().add(categoryImage);
-        }
+
+        HBox categoriesBox = createCategoriesSlider();
 
         Label popularRecipesLabel = new Label("Popular Recipes");
         popularRecipesLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
@@ -153,9 +144,13 @@ public class VeggieChefApp extends Application {
             HBox recipeBox = new HBox(10);
             String imageName = "recipe" + recipe.getId() + ".png";
             ImageView recipeImage = new ImageView(loadImage(imageName));
+            if (recipeImage.getImage().isError()) {
+                System.out.println("Failed to load image: " + imageName);
+            }
             recipeImage.setFitHeight(60);
             recipeImage.setFitWidth(60);
             Label recipeDetails = new Label(recipe.toString());
+            recipeDetails.setWrapText(true);
 
             // Favorite icon
             Button favoriteButton = new Button();
@@ -172,34 +167,112 @@ public class VeggieChefApp extends Application {
 
         Label topChefsLabel = new Label("Top Chefs");
         topChefsLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-        HBox topChefsBox = new HBox(10);
-        topChefsBox.setAlignment(Pos.CENTER_LEFT);
-        List<Chef> topChefs = dbManager.getAllChefs();
-        for (Chef chef : topChefs) {
-            VBox chefBox = new VBox(5);
-            ImageView chefImage = new ImageView(loadImage("chef" + chef.getId() + ".png"));
-            chefImage.setFitHeight(40);
-            chefImage.setFitWidth(40);
-            Label chefName = new Label(chef.getName());
-            chefBox.getChildren().addAll(chefImage, chefName);
-            topChefsBox.getChildren().add(chefBox);
-        }
+        HBox topChefsBox = createChefsSlider();
 
         mainView.getChildren().addAll(categoriesLabel, categoriesBox, popularRecipesLabel, popularRecipesBox, topChefsLabel, topChefsBox);
-        mainLayout.setCenter(new ScrollPane(mainView));
+        ScrollPane scrollPane = new ScrollPane(mainView);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        mainLayout.setCenter(scrollPane);
     }
 
-    private void showAllRecipesView() {
-        VBox allRecipesView = new VBox(10);
-        allRecipesView.setPadding(new Insets(10));
+    private HBox createCategoriesSlider() {
+        HBox categoriesBox = new HBox(10);
+        categoriesBox.setAlignment(Pos.CENTER_LEFT);
+        categoriesBox.setPadding(new Insets(10));
 
-        Label allRecipesLabel = new Label("All Recipes");
-        allRecipesLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        List<String> categories = dbManager.getAllCategories();
+        for (String category : categories) {
+            VBox categoryBox = new VBox(5);
+            categoryBox.setAlignment(Pos.CENTER);
+            Label categoryLabel = new Label(category);
+            categoryLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+            ImageView categoryImage = new ImageView(loadImage("category" + categories.indexOf(category) + ".png"));
+            categoryImage.setFitHeight(80);
+            categoryImage.setFitWidth(80);
+            categoryBox.getChildren().addAll(categoryLabel, categoryImage);
+            categoryBox.setOnMouseClicked(e -> showRecipesByCategory(category));
+            categoriesBox.getChildren().add(categoryBox);
+        }
+
+        ScrollPane scrollPane = new ScrollPane(categoriesBox);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true); // Prevent vertical scrolling
+        scrollPane.setPrefViewportWidth(400);
+        scrollPane.setMinViewportHeight(120); // Set minimum height to prevent vertical scrolling
+
+        Button leftButton = new Button("<");
+        leftButton.setStyle("-fx-background-color: #FF6F00; -fx-text-fill: white;");
+        leftButton.setOnAction(e -> scrollPane.setHvalue(scrollPane.getHvalue() - 0.1));
+
+        Button rightButton = new Button(">");
+        rightButton.setStyle("-fx-background-color: #FF6F00; -fx-text-fill: white;");
+        rightButton.setOnAction(e -> scrollPane.setHvalue(scrollPane.getHvalue() + 0.1));
+
+        HBox slider = new HBox(leftButton, scrollPane, rightButton);
+        slider.setAlignment(Pos.CENTER);
+        slider.setPrefHeight(140); // Adjust height as needed
+
+        return slider;
+    }
+
+    private HBox createChefsSlider() {
+        HBox chefsBox = new HBox(10);
+        chefsBox.setAlignment(Pos.CENTER_LEFT);
+        chefsBox.setPadding(new Insets(10));
+
+        List<Chef> chefs = dbManager.getAllChefs();
+        for (Chef chef : chefs) {
+            VBox chefBox = new VBox(5);
+            chefBox.setAlignment(Pos.CENTER);
+            ImageView chefImage = new ImageView(loadImage("chef" + chef.getId() + ".png"));
+            chefImage.setFitHeight(80);
+            chefImage.setFitWidth(80);
+            Label chefName = new Label(chef.getName());
+            chefBox.getChildren().addAll(chefImage, chefName);
+            chefBox.setOnMouseClicked(e -> showRecipesByChef(chef));
+            chefsBox.getChildren().add(chefBox);
+        }
+
+        ScrollPane scrollPane = new ScrollPane(chefsBox);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true); // Prevent vertical scrolling
+        scrollPane.setPrefViewportWidth(400);
+        scrollPane.setMinViewportHeight(120); // Set minimum height to prevent vertical scrolling
+
+        Button leftButton = new Button("<");
+        leftButton.setStyle("-fx-background-color: #FF6F00; -fx-text-fill: white;");
+        leftButton.setOnAction(e -> scrollPane.setHvalue(scrollPane.getHvalue() - 0.1));
+
+        Button rightButton = new Button(">");
+        rightButton.setStyle("-fx-background-color: #FF6F00; -fx-text-fill: white;");
+        rightButton.setOnAction(e -> scrollPane.setHvalue(scrollPane.getHvalue() + 0.1));
+
+        HBox slider = new HBox(leftButton, scrollPane, rightButton);
+        slider.setAlignment(Pos.CENTER);
+        slider.setPrefHeight(140); // Adjust height as needed
+
+        return slider;
+    }
+
+    private void showRecipesByCategory(String category) {
+        VBox recipesByCategoryView = new VBox(10);
+        recipesByCategoryView.setPadding(new Insets(10));
+        recipesByCategoryView.setMaxWidth(450);
+
+        Label recipesByCategoryLabel = new Label("Recipes in " + category);
+        recipesByCategoryLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
         VBox recipesBox = new VBox(10);
-        List<Recipe> recipes = dbManager.getPopularRecipes();
+        List<Recipe> recipes = dbManager.getRecipesByCategory(category);
         if (recipes.isEmpty()) {
-            recipesBox.getChildren().add(new Label("No recipes found."));
+            recipesBox.getChildren().add(new Label("No recipes found in this category."));
         } else {
             for (Recipe recipe : recipes) {
                 HBox recipeBox = new HBox(10);
@@ -207,9 +280,13 @@ public class VeggieChefApp extends Application {
                 recipeBox.setStyle("-fx-border-color: #ddd; -fx-background-color: #f9f9f9; -fx-background-radius: 10px;");
                 String imageName = "recipe" + recipe.getId() + ".png";
                 ImageView recipeImage = new ImageView(loadImage(imageName));
+                if (recipeImage.getImage().isError()) {
+                    System.out.println("Failed to load image: " + imageName);
+                }
                 recipeImage.setFitHeight(60);
                 recipeImage.setFitWidth(60);
                 Label recipeDetails = new Label(recipe.toString());
+                recipeDetails.setWrapText(true);
 
                 // Favorite icon
                 Button favoriteButton = new Button();
@@ -225,13 +302,89 @@ public class VeggieChefApp extends Application {
             }
         }
 
-        allRecipesView.getChildren().addAll(allRecipesLabel, recipesBox);
-        mainLayout.setCenter(new ScrollPane(allRecipesView));
+        recipesByCategoryView.getChildren().addAll(recipesByCategoryLabel, recipesBox);
+        ScrollPane scrollPane = new ScrollPane(recipesByCategoryView);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        mainLayout.setCenter(scrollPane);
+    }
+
+    private void showAllRecipesView() {
+        VBox allRecipesView = new VBox(10);
+        allRecipesView.setPadding(new Insets(10));
+        allRecipesView.setMaxWidth(450);
+
+        Label allRecipesLabel = new Label("All Recipes");
+        allRecipesLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+        // Categories filter
+        HBox categoriesFilterBox = new HBox(10);
+        categoriesFilterBox.setAlignment(Pos.CENTER_LEFT);
+        categoriesFilterBox.setPadding(new Insets(10));
+
+        Label filterLabel = new Label("Filter by Category: ");
+        categoriesFilterBox.getChildren().add(filterLabel);
+
+        ComboBox<String> categoryComboBox = new ComboBox<>();
+        categoryComboBox.getItems().add("ALL");
+        categoryComboBox.getItems().addAll(dbManager.getAllCategories());
+        categoryComboBox.setOnAction(e -> {
+            if (categoryComboBox.getValue().equals("ALL")) {
+                showAllRecipesView();
+            } else {
+                showRecipesByCategory(categoryComboBox.getValue());
+            }
+        });
+        categoriesFilterBox.getChildren().add(categoryComboBox);
+
+        VBox recipesBox = new VBox(10);
+        List<Recipe> recipes = dbManager.getPopularRecipes();
+        if (recipes.isEmpty()) {
+            recipesBox.getChildren().add(new Label("No recipes found."));
+        } else {
+            for (Recipe recipe : recipes) {
+                HBox recipeBox = new HBox(10);
+                recipeBox.setPadding(new Insets(5));
+                recipeBox.setStyle("-fx-border-color: #ddd; -fx-background-color: #f9f9f9; -fx-background-radius: 10px;");
+                String imageName = "recipe" + recipe.getId() + ".png";
+                ImageView recipeImage = new ImageView(loadImage(imageName));
+                if (recipeImage.getImage().isError()) {
+                    System.out.println("Failed to load image: " + imageName);
+                }
+                recipeImage.setFitHeight(60);
+                recipeImage.setFitWidth(60);
+                Label recipeDetails = new Label(recipe.toString());
+                recipeDetails.setWrapText(true);
+
+                // Favorite icon
+                Button favoriteButton = new Button();
+                ImageView favoriteIcon = new ImageView(loadImage(recipe.getFavorite() == 1 ? "filled_heart.png" : "unfilled_heart.png"));
+                favoriteIcon.setFitHeight(20);
+                favoriteIcon.setFitWidth(20);
+                favoriteButton.setGraphic(favoriteIcon);
+                favoriteButton.setStyle("-fx-background-color: transparent;");
+                favoriteButton.setOnAction(e -> toggleFavorite(recipe, favoriteButton));
+
+                recipeBox.getChildren().addAll(recipeImage, recipeDetails, favoriteButton);
+                recipesBox.getChildren().add(recipeBox);
+            }
+        }
+
+        allRecipesView.getChildren().addAll(allRecipesLabel, categoriesFilterBox, recipesBox);
+        ScrollPane scrollPane = new ScrollPane(allRecipesView);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        mainLayout.setCenter(scrollPane);
     }
 
     private void applySearchFilters(String searchString) {
         VBox recipesView = new VBox(10);
         recipesView.setPadding(new Insets(10));
+        recipesView.setMaxWidth(450);
 
         Label recipesLabel = new Label("Recipes");
         recipesLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
@@ -249,9 +402,13 @@ public class VeggieChefApp extends Application {
                     recipeBox.setStyle("-fx-border-color: #ddd; -fx-background-color: #f9f9f9; -fx-background-radius: 10px;");
                     String imageName = "recipe" + recipe.getId() + ".png";
                     ImageView recipeImage = new ImageView(loadImage(imageName));
+                    if (recipeImage.getImage().isError()) {
+                        System.out.println("Failed to load image: " + imageName);
+                    }
                     recipeImage.setFitHeight(60);
                     recipeImage.setFitWidth(60);
                     Label recipeDetails = new Label(recipe.toString());
+                    recipeDetails.setWrapText(true);
 
                     // Favorite icon
                     Button favoriteButton = new Button();
@@ -270,6 +427,9 @@ public class VeggieChefApp extends Application {
                     chefBox.setPadding(new Insets(5));
                     chefBox.setStyle("-fx-border-color: #ddd; -fx-background-color: #f9f9f9; -fx-background-radius: 10px;");
                     ImageView chefImage = new ImageView(loadImage("chef" + chef.getId() + ".png"));
+                    if (chefImage.getImage().isError()) {
+                        System.out.println("Failed to load image: chef" + chef.getId() + ".png");
+                    }
                     chefImage.setFitHeight(40);
                     chefImage.setFitWidth(40);
                     Label chefDetails = new Label(chef.toString());
@@ -283,7 +443,12 @@ public class VeggieChefApp extends Application {
         }
 
         recipesView.getChildren().addAll(recipesLabel, resultsBox);
-        mainLayout.setCenter(new ScrollPane(recipesView));
+        ScrollPane scrollPane = new ScrollPane(recipesView);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        mainLayout.setCenter(scrollPane);
     }
 
     private void toggleFavorite(Recipe recipe, Button favoriteButton) {
@@ -299,6 +464,7 @@ public class VeggieChefApp extends Application {
     private void showRecipesByChef(Chef chef) {
         VBox recipesByChefView = new VBox(10);
         recipesByChefView.setPadding(new Insets(10));
+        recipesByChefView.setMaxWidth(450);
 
         Label recipesByChefLabel = new Label("Recipes by " + chef.getName());
         recipesByChefLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
@@ -313,9 +479,13 @@ public class VeggieChefApp extends Application {
                 recipeBox.setPadding(new Insets(5));
                 recipeBox.setStyle("-fx-border-color: #ddd; -fx-background-color: #f9f9f9; -fx-background-radius: 10px;");
                 ImageView recipeImage = new ImageView(loadImage("recipe" + recipe.getId() + ".png"));
+                if (recipeImage.getImage().isError()) {
+                    System.out.println("Failed to load image: recipe" + recipe.getId() + ".png");
+                }
                 recipeImage.setFitHeight(60);
                 recipeImage.setFitWidth(60);
                 Label recipeDetails = new Label(recipe.toString());
+                recipeDetails.setWrapText(true);
 
                 // Favorite icon
                 Button favoriteButton = new Button();
@@ -332,12 +502,18 @@ public class VeggieChefApp extends Application {
         }
 
         recipesByChefView.getChildren().addAll(recipesByChefLabel, recipesBox);
-        mainLayout.setCenter(new ScrollPane(recipesByChefView));
+        ScrollPane scrollPane = new ScrollPane(recipesByChefView);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        mainLayout.setCenter(scrollPane);
     }
 
     private void showFavoritesView() {
         VBox favoritesView = new VBox(10);
         favoritesView.setPadding(new Insets(10));
+        favoritesView.setMaxWidth(450);
 
         Label favoritesLabel = new Label("Favorites");
         favoritesLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
@@ -352,9 +528,13 @@ public class VeggieChefApp extends Application {
                 recipeBox.setPadding(new Insets(5));
                 recipeBox.setStyle("-fx-border-color: #ddd; -fx-background-color: #f9f9f9; -fx-background-radius: 10px;");
                 ImageView recipeImage = new ImageView(loadImage("recipe" + recipe.getId() + ".png"));
+                if (recipeImage.getImage().isError()) {
+                    System.out.println("Failed to load image: recipe" + recipe.getId() + ".png");
+                }
                 recipeImage.setFitHeight(60);
                 recipeImage.setFitWidth(60);
                 Label recipeDetails = new Label(recipe.toString());
+                recipeDetails.setWrapText(true);
 
                 // Favorite icon (always filled for favorites view)
                 Button favoriteButton = new Button();
@@ -371,12 +551,18 @@ public class VeggieChefApp extends Application {
         }
 
         favoritesView.getChildren().addAll(favoritesLabel, favoritesBox);
-        mainLayout.setCenter(new ScrollPane(favoritesView));
+        ScrollPane scrollPane = new ScrollPane(favoritesView);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        mainLayout.setCenter(scrollPane);
     }
 
     private void showChefsView() {
         VBox chefsView = new VBox(10);
         chefsView.setPadding(new Insets(10));
+        chefsView.setMaxWidth(450);
 
         Label chefsLabel = new Label("Top Chefs");
         chefsLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
@@ -390,29 +576,78 @@ public class VeggieChefApp extends Application {
             chefBox.setStyle("-fx-border-color: #ddd; -fx-background-color: #f9f9f9; -fx-background-radius: 10px;");
 
             ImageView chefImage = new ImageView(loadImage("chef" + chef.getId() + ".png"));
-            chefImage.setFitHeight(40);
-            chefImage.setFitWidth(40);
+            if (chefImage.getImage().isError()) {
+                System.out.println("Failed to load image: chef" + chef.getId() + ".png");
+            }
+            chefImage.setFitHeight(100);
+            chefImage.setFitWidth(100);
             Label chefName = new Label(chef.getName());
+            chefName.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 
             chefBox.getChildren().addAll(chefImage, chefName);
             chefBox.setOnMouseClicked(e -> showRecipesByChef(chef));
             chefsBox.getChildren().add(chefBox);
         }
 
-        chefsView.getChildren().addAll(chefsLabel, chefsBox);
-        mainLayout.setCenter(new ScrollPane(chefsView));
+        ScrollPane scrollPane = new ScrollPane(chefsBox);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true); // Prevent vertical scrolling
+        scrollPane.setPrefViewportWidth(400);
+        scrollPane.setMinViewportHeight(120); // Set minimum height to prevent vertical scrolling
+
+        Button leftButton = new Button("<");
+        leftButton.setStyle("-fx-background-color: #FF6F00; -fx-text-fill: white;");
+        leftButton.setOnAction(e -> {
+            scrollPane.setHvalue(scrollPane.getHvalue() - 0.1);
+        });
+
+        Button rightButton = new Button(">");
+        rightButton.setStyle("-fx-background-color: #FF6F00; -fx-text-fill: white;");
+        rightButton.setOnAction(e -> {
+            scrollPane.setHvalue(scrollPane.getHvalue() + 0.1);
+        });
+
+        HBox slider = new HBox(leftButton, scrollPane, rightButton);
+        slider.setAlignment(Pos.CENTER);
+        slider.setMaxWidth(470); // Set the max width to avoid overflow
+        slider.setPrefHeight(140); // Adjust height as needed
+
+        chefsView.getChildren().addAll(chefsLabel, slider);
+        ScrollPane viewScrollPane = new ScrollPane(chefsView);
+        viewScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        viewScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        viewScrollPane.setFitToWidth(true);
+        viewScrollPane.setFitToHeight(true);
+        mainLayout.setCenter(viewScrollPane);
     }
 
     private void showQRCodeView() {
         Label qrCodeLabel = new Label("QR Code View");
         VBox qrCodeView = new VBox(qrCodeLabel);
         qrCodeView.setPadding(new Insets(10));
+        qrCodeView.setMaxWidth(450);
         VBox.setVgrow(qrCodeView, Priority.ALWAYS);
-        mainLayout.setCenter(qrCodeView);
+        ScrollPane scrollPane = new ScrollPane(qrCodeView);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        mainLayout.setCenter(scrollPane);
     }
 
     private Image loadImage(String imageName) {
-        return new Image(getClass().getResourceAsStream("/" + imageName));
+        Image image = null;
+        try {
+            image = new Image(getClass().getResourceAsStream("/" + imageName));
+            if (image.isError()) {
+                System.err.println("Error loading image: " + imageName);
+            }
+        } catch (NullPointerException e) {
+            System.err.println("Image not found: " + imageName);
+        }
+        return image;
     }
 
     public static void main(String[] args) {

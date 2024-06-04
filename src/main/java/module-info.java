@@ -6,6 +6,7 @@ module org.example {
     requires com.google.zxing.javase;
     requires java.desktop;
     requires javafx.swing;
+    requires java.xml.crypto;
     opens org.example to javafx.fxml;
     exports org.example;
 }
