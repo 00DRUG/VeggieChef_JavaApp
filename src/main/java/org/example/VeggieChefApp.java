@@ -11,6 +11,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+import java.util.Collections;
 import java.util.List;
 
 public class VeggieChefApp extends Application {
@@ -154,7 +155,10 @@ public class VeggieChefApp extends Application {
         popularRecipesLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
         VBox popularRecipesBox = new VBox(10);
         List<Recipe> popularRecipes = dbManager.getPopularRecipes();
-        for (Recipe recipe : popularRecipes) {
+        Collections.shuffle(popularRecipes); // Shuffle the list of popular recipes
+        int count = Math.min(5, popularRecipes.size()); // Display only 5 recipes or less if there are fewer
+        for (int i = 0; i < count; i++) {
+            Recipe recipe = popularRecipes.get(i);
             HBox recipeBox = new HBox(10);
             String imageName = "recipe" + recipe.getId() + ".png";
             ImageView recipeImage = new ImageView(loadImage(imageName));
