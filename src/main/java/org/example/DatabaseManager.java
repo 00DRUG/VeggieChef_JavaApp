@@ -29,7 +29,7 @@ public class DatabaseManager {
     }
 
     public List<Recipe> getPopularRecipes() {
-        String sql = "SELECT id, name, duration, difficulty, author, category, favorite FROM recipes";
+        String sql = "SELECT id, name, duration, difficulty, author, favorite, ingredients, instructions, nutritions FROM recipes";
         List<Recipe> recipes = new ArrayList<>();
         try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             ResultSet rs = pstmt.executeQuery();
@@ -39,9 +39,11 @@ public class DatabaseManager {
                 String duration = rs.getString("duration");
                 String difficulty = rs.getString("difficulty");
                 String author = rs.getString("author");
-                String category = rs.getString("category");
                 int favorite = rs.getInt("favorite");
-                recipes.add(new Recipe(id, name, duration, difficulty, author, category, favorite));
+                String ingredients = rs.getString("ingredients");
+                String instructions = rs.getString("instructions");
+                String nutritions = rs.getString("nutritions");
+                recipes.add(new Recipe(id, name, duration, difficulty, author, favorite, ingredients, instructions, nutritions));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -50,7 +52,7 @@ public class DatabaseManager {
     }
 
     public List<Recipe> getRecipesByCategory(String category) {
-        String sql = "SELECT id, name, duration, difficulty, author, category, favorite FROM recipes WHERE category = ?";
+        String sql = "SELECT id, name, duration, difficulty, author, favorite, ingredients, instructions, nutritions FROM recipes WHERE category = ?";
         List<Recipe> recipes = new ArrayList<>();
         try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, category);
@@ -61,9 +63,11 @@ public class DatabaseManager {
                 String duration = rs.getString("duration");
                 String difficulty = rs.getString("difficulty");
                 String author = rs.getString("author");
-                String cat = rs.getString("category");
                 int favorite = rs.getInt("favorite");
-                recipes.add(new Recipe(id, name, duration, difficulty, author, cat, favorite));
+                String ingredients = rs.getString("ingredients");
+                String instructions = rs.getString("instructions");
+                String nutritions = rs.getString("nutritions");
+                recipes.add(new Recipe(id, name, duration, difficulty, author, favorite, ingredients, instructions, nutritions));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -86,7 +90,7 @@ public class DatabaseManager {
     }
 
     public List<Recipe> getFavoriteRecipes() {
-        String sql = "SELECT id, name, duration, difficulty, author, category, favorite FROM recipes WHERE favorite = 1";
+        String sql = "SELECT id, name, duration, difficulty, author, favorite, ingredients, instructions, nutritions FROM recipes WHERE favorite = 1";
         List<Recipe> recipes = new ArrayList<>();
         try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             ResultSet rs = pstmt.executeQuery();
@@ -96,9 +100,8 @@ public class DatabaseManager {
                 String duration = rs.getString("duration");
                 String difficulty = rs.getString("difficulty");
                 String author = rs.getString("author");
-                String category = rs.getString("category");
                 int favorite = rs.getInt("favorite");
-                recipes.add(new Recipe(id, name, duration, difficulty, author, category, favorite));
+                recipes.add(new Recipe(id, name, duration, difficulty, author, favorite));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -107,7 +110,7 @@ public class DatabaseManager {
     }
 
     public List<Object> search(String searchString) {
-        String recipeSql = "SELECT id, name, duration, difficulty, author, category, favorite FROM recipes WHERE name LIKE ? OR author LIKE ? OR category LIKE ?";
+        String recipeSql = "SELECT id, name, duration, difficulty, author, favorite, ingredients, instructions, nutritions FROM recipes WHERE name LIKE ? OR author LIKE ? OR category LIKE ?";
         List<Object> results = new ArrayList<>();
         try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(recipeSql)) {
             pstmt.setString(1, "%" + searchString + "%");
@@ -120,9 +123,8 @@ public class DatabaseManager {
                 String duration = rs.getString("duration");
                 String difficulty = rs.getString("difficulty");
                 String author = rs.getString("author");
-                String category = rs.getString("category");
                 int favorite = rs.getInt("favorite");
-                results.add(new Recipe(id, name, duration, difficulty, author, category, favorite));
+                results.add(new Recipe(id, name, duration, difficulty, author, favorite));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -172,7 +174,7 @@ public class DatabaseManager {
     }
 
     public List<Recipe> getRecipesByChefName(String chefName) {
-        String sql = "SELECT id, name, duration, difficulty, author, category, favorite FROM Recipes WHERE author = ?";
+        String sql = "SELECT id, name, duration, difficulty, author, favorite FROM Recipes WHERE author = ?";
         List<Recipe> recipes = new ArrayList<>();
 
         try (Connection conn = this.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -186,7 +188,6 @@ public class DatabaseManager {
                         rs.getString("duration"),
                         rs.getString("difficulty"),
                         rs.getString("author"),
-                        rs.getString("category"),  // This was missing
                         rs.getInt("favorite")
                 );
                 recipes.add(recipe);

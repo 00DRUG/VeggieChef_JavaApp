@@ -180,6 +180,7 @@ public class VeggieChefApp extends Application {
             favoriteButton.setOnAction(e -> toggleFavorite(recipe, favoriteButton));
 
             recipeBox.getChildren().addAll(recipeImage, recipeDetails, favoriteButton);
+            recipeBox.setOnMouseClicked(e -> handleRecipeClick(recipe)); // Add this line to handle recipe click
             popularRecipesBox.getChildren().add(recipeBox);
         }
 
@@ -195,6 +196,7 @@ public class VeggieChefApp extends Application {
         scrollPane.setFitToHeight(true);
         mainLayout.setCenter(scrollPane);
     }
+
     private HBox createChefsSlider() {
         HBox chefsBox = new HBox(10);
         chefsBox.setAlignment(Pos.CENTER_LEFT);
@@ -217,9 +219,9 @@ public class VeggieChefApp extends Application {
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true); // Prevent vertical scrolling
+        scrollPane.setFitToHeight(true);
         scrollPane.setPrefViewportWidth(400);
-        scrollPane.setMinViewportHeight(120); // Set minimum height to prevent vertical scrolling
+        scrollPane.setMinViewportHeight(120);
 
         Button leftButton = new Button("<");
         leftButton.setStyle("-fx-background-color: #FF6F00; -fx-text-fill: white;");
@@ -231,10 +233,11 @@ public class VeggieChefApp extends Application {
 
         HBox slider = new HBox(leftButton, scrollPane, rightButton);
         slider.setAlignment(Pos.CENTER);
-        slider.setPrefHeight(140); // Adjust height as needed
+        slider.setPrefHeight(140);
 
         return slider;
     }
+
     private HBox createCategoriesSlider() {
         HBox categoriesBox = new HBox(10);
         categoriesBox.setAlignment(Pos.CENTER_LEFT);
@@ -258,9 +261,9 @@ public class VeggieChefApp extends Application {
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true); // Prevent vertical scrolling
+        scrollPane.setFitToHeight(true);
         scrollPane.setPrefViewportWidth(400);
-        scrollPane.setMinViewportHeight(120); // Set minimum height to prevent vertical scrolling
+        scrollPane.setMinViewportHeight(120);
 
         Button leftButton = new Button("<");
         leftButton.setStyle("-fx-background-color: #FF6F00; -fx-text-fill: white;");
@@ -272,7 +275,7 @@ public class VeggieChefApp extends Application {
 
         HBox slider = new HBox(leftButton, scrollPane, rightButton);
         slider.setAlignment(Pos.CENTER);
-        slider.setPrefHeight(140); // Adjust height as needed
+        slider.setPrefHeight(140);
 
         return slider;
     }
@@ -314,6 +317,7 @@ public class VeggieChefApp extends Application {
                 favoriteButton.setOnAction(e -> toggleFavorite(recipe, favoriteButton));
 
                 recipeBox.getChildren().addAll(recipeImage, recipeDetails, favoriteButton);
+                recipeBox.setOnMouseClicked(e -> handleRecipeClick(recipe));
                 recipesBox.getChildren().add(recipeBox);
             }
         }
@@ -370,6 +374,7 @@ public class VeggieChefApp extends Application {
                 favoriteButton.setOnAction(e -> toggleFavorite(recipe, favoriteButton));
 
                 recipeBox.getChildren().addAll(recipeImage, recipeDetails, favoriteButton);
+                recipeBox.setOnMouseClicked(e -> handleRecipeClick(recipe)); // Add this line to handle recipe click
                 recipesBox.getChildren().add(recipeBox);
             }
         }
@@ -437,6 +442,7 @@ public class VeggieChefApp extends Application {
                     favoriteButton.setOnAction(e -> toggleFavorite(recipe, favoriteButton));
 
                     recipeBox.getChildren().addAll(recipeImage, recipeDetails, favoriteButton);
+                    recipeBox.setOnMouseClicked(e -> handleRecipeClick(recipe));
                     resultsBox.getChildren().add(recipeBox);
                 } else if (result instanceof Chef) {
                     Chef chef = (Chef) result;
@@ -466,7 +472,7 @@ public class VeggieChefApp extends Application {
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
 
-        VBox combinedView = new VBox(createCategoryFilterBox(), scrollPane); // Combine category filter and search results
+        VBox combinedView = new VBox(createCategoryFilterBox(), scrollPane);
         combinedView.setSpacing(10);
         mainLayout.setCenter(combinedView);
     }
@@ -517,6 +523,7 @@ public class VeggieChefApp extends Application {
                 favoriteButton.setOnAction(e -> toggleFavorite(recipe, favoriteButton));
 
                 recipeBox.getChildren().addAll(recipeImage, recipeDetails, favoriteButton);
+                recipeBox.setOnMouseClicked(e -> handleRecipeClick(recipe));
                 recipesBox.getChildren().add(recipeBox);
             }
         }
@@ -528,7 +535,7 @@ public class VeggieChefApp extends Application {
         recipesScrollPane.setFitToWidth(true);
         recipesScrollPane.setFitToHeight(true);
 
-        VBox combinedView = new VBox(createCategoryFilterBox(), recipesScrollPane); // Combine category filter and recipes by chef
+        VBox combinedView = new VBox(createCategoryFilterBox(), recipesScrollPane);
         combinedView.setSpacing(10);
         mainLayout.setCenter(combinedView);
     }
@@ -569,6 +576,7 @@ public class VeggieChefApp extends Application {
                 favoriteButton.setOnAction(e -> toggleFavorite(recipe, favoriteButton));
 
                 recipeBox.getChildren().addAll(recipeImage, recipeDetails, favoriteButton);
+                recipeBox.setOnMouseClicked(e -> handleRecipeClick(recipe));
                 favoritesBox.getChildren().add(recipeBox);
             }
         }
@@ -626,8 +634,6 @@ public class VeggieChefApp extends Application {
         mainLayout.setCenter(scrollPane);
     }
 
-
-
     private void showQRCodeView() {
         Label qrCodeLabel = new Label("QR Code View");
         VBox qrCodeView = new VBox(qrCodeLabel);
@@ -655,8 +661,72 @@ public class VeggieChefApp extends Application {
         return image;
     }
 
+
+    private void showRecipeDetails(Recipe recipe) {
+        VBox recipeDetailsView = new VBox(10);
+        recipeDetailsView.setPadding(new Insets(10));
+
+        Label nameLabel = new Label(recipe.getName());
+        nameLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+
+        HBox infoBox = new HBox(10);
+        infoBox.setAlignment(Pos.TOP_LEFT);
+        HBox.setHgrow(infoBox, Priority.ALWAYS);
+
+        VBox labelsBox = new VBox(5);
+        labelsBox.setAlignment(Pos.TOP_LEFT);
+        HBox.setHgrow(labelsBox, Priority.ALWAYS);
+
+        Label durationLabel = new Label("Duration: " + recipe.getDuration());
+        Label difficultyLabel = new Label("Difficulty: " + recipe.getDifficulty());
+        Label authorLabel = new Label("Author: " + recipe.getAuthor());
+        labelsBox.getChildren().addAll(durationLabel, difficultyLabel, authorLabel);
+
+        ImageView recipeImage = new ImageView(loadImage("recipe" + recipe.getId() + ".png"));
+        recipeImage.setFitHeight(150);
+        recipeImage.setFitWidth(150);
+
+        infoBox.getChildren().addAll(labelsBox, recipeImage);
+        HBox.setHgrow(recipeImage, Priority.ALWAYS);
+
+        Label ingredientsLabel = new Label("Ingredients:");
+        Label ingredientsText = new Label(recipe.getIngredients());
+        ingredientsText.setWrapText(true);
+        ingredientsText.setMaxWidth(Double.MAX_VALUE);
+        ingredientsText.setMaxWidth(450);
+
+        Label instructionsLabel = new Label("Instructions:");
+        Label instructionsText = new Label(recipe.getInstructions());
+        instructionsText.setWrapText(true);
+        instructionsText.setMaxWidth(Double.MAX_VALUE);
+        instructionsText.setMaxWidth(450);
+
+        Label nutritionLabel = new Label("Nutrition:");
+        Label nutritionText = new Label(recipe.getNutritions());
+        nutritionText.setWrapText(true);
+        nutritionText.setMaxWidth(Double.MAX_VALUE);
+        nutritionText.setMaxWidth(450);
+
+        recipeDetailsView.getChildren().addAll(nameLabel, infoBox, ingredientsLabel, ingredientsText,
+                instructionsLabel, instructionsText, nutritionLabel, nutritionText);
+
+        ScrollPane scrollPane = new ScrollPane(recipeDetailsView);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+
+        VBox combinedView = new VBox(createCategoryFilterBox(), scrollPane);
+        combinedView.setSpacing(10);
+        mainLayout.setCenter(combinedView);
+    }
+
+
+    private void handleRecipeClick(Recipe recipe) {
+        showRecipeDetails(recipe);
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
 }
-
